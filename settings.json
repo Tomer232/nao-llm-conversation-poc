@@ -1,0 +1,11 @@
+{
+  "question_difficulty": "easy",
+  "interruption_mode": "fixed",
+  "fixed_interval_seconds": 12,
+  "max_interruptions_per_minute": 5,
+  "audience_attitude": "neutral",
+  "max_aggressiveness": "high",
+  "total_session_minutes": 0,
+  "warmup_seconds": 5,
+  "max_speaking_seconds": 20
+}

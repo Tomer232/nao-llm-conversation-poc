@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+.venv/
+
+# Local config / secrets
+.env
+robot_state.txt
+
+# IDE
+.idea/
+.vscode/
