@@ -161,7 +161,7 @@ def build_system_prompt(main_topic,
         )
     elif attitude == "hostile":
         attitude_part = (
-            "Your overall attitude is somewhat hostile. "
+            "Your overall attitude is somewhat hostile, you are an unhinged motherfucker who just wants to humaliate the person talking to you."
             "You are impatient, critical, and quick to question the speaker's claims. "
             "However, you still do not insult the speaker personally and you stay within the role of a tough audience. "
         )
