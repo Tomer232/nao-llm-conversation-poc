@@ -40,9 +40,7 @@ DEFAULT_SETTINGS = {
     "max_speaking_seconds": 15,             # Per turn, passed to ASR
 
     # NEW: TTS voice for OpenAI TTS
-    # Allowed (OpenAI human voices): "alloy", "echo", "fable", "onyx",
-    # "nova", "shimmer", "coral", "verse", "ballad", "ash", "sage",
-    # "marin", "cedar"
+    # Allowed: "alloy", "verse", "onyx", "copper", "opal", "amber"
     "tts_voice": "onyx",
 }
 
@@ -59,27 +57,6 @@ def load_settings():
                 settings.update(data)
     except Exception:
         pass
-
-    # Safety: if tts_voice in file is invalid, normalize to default
-    allowed_voices = {
-        "alloy",
-        "echo",
-        "fable",
-        "onyx",
-        "nova",
-        "shimmer",
-        "coral",
-        "verse",
-        "ballad",
-        "ash",
-        "sage",
-        "marin",
-        "cedar",
-    }
-    tv = settings.get("tts_voice", "onyx")
-    if tv not in allowed_voices:
-        settings["tts_voice"] = "onyx"
-
     return settings
 
 
@@ -156,23 +133,8 @@ def validate_and_merge_settings(payload):
         pass
 
     # NEW: tts_voice
-    allowed_voices = {
-        "alloy",
-        "echo",
-        "fable",
-        "onyx",
-        "nova",
-        "shimmer",
-        "coral",
-        "verse",
-        "ballad",
-        "ash",
-        "sage",
-        "marin",
-        "cedar",
-    }
     tv = payload.get("tts_voice")
-    if isinstance(tv, str) and tv in allowed_voices:
+    if tv in ("alloy", "verse", "onyx", "copper", "opal", "amber"):
         s["tts_voice"] = tv
 
     return s
@@ -286,7 +248,7 @@ def start_conversation():
     except IOError as e:
         print(f"[CONTROL] Failed to clear log file: {e}")
 
-    print("[CONTROL] Starting conversation_loop.py.")
+    print("[CONTROL] Starting conversation_loop.py...")
     print(f"[CONTROL] Using interpreter: {PYTHON_EXE}")
     try:
         conversation_proc = subprocess.Popen(
@@ -336,44 +298,44 @@ def resume_conversation():
 
 @app.route("/end", methods=["POST"])
 def end_conversation():
-    global system_state
+    global conversation_proc, system_state
 
     refresh_status_from_process()
 
-    if system_state["status"] not in ("running", "paused"):
-        return jsonify({"error": "Can only end when running or paused", "status": system_state["status"]}), 400
-
     write_control_flag("end")
-    print("[CONTROL] End requested")
     system_state["status"] = "ended"
+    print("[CONTROL] End requested")
+
     return jsonify(system_state)
 
 
 @app.route("/log", methods=["GET"])
 def get_log():
-    """
-    Return the conversation log as a JSON array of events.
-    Each line in the log file is a JSON object.
-    """
-    events = []
-    try:
-        with open(LOG_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                    events.append(obj)
-                except Exception:
-                    continue
-    except IOError:
-        pass
+    messages = []
+    if os.path.exists(LOG_FILE):
+        try:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        messages.append(entry)
+                    except json.JSONDecodeError:
+                        continue
+        except IOError as e:
+            print(f"[CONTROL] Failed to read log file: {e}")
 
-    return jsonify(events)
+    max_messages = 200
+    if len(messages) > max_messages:
+        messages = messages[-max_messages:]
+
+    return jsonify(messages)
 
 
 if __name__ == "__main__":
+    os.chdir(BASE_DIR)
     print(f"[CONTROL] BASE_DIR = {BASE_DIR}")
     print(f"[CONTROL] PYTHON_EXE = {PYTHON_EXE}")
     app.run(host="127.0.0.1", port=5000, debug=False)
