@@ -91,3 +91,54 @@ class TestConversationHistory:
         history.add_user_message("hello world")
         tokens = history._estimate_tokens()
         assert 2 <= tokens <= 4
+
+    def test_truncation_non_alternating(self):
+        """Non-alternating messages (two user msgs in a row) don't break truncation."""
+        history = ConversationHistory(max_tokens=20)
+
+        history.add_user_message("first " * 5)
+        # Two consecutive user messages (simulates ASR fallback)
+        history.add_user_message("second " * 5)
+        history.add_user_message("third " * 5)
+        history.add_assistant_message("response " * 5)
+        history.add_user_message("fourth " * 5)
+
+        messages = history.get_messages()
+        # Should not crash or infinite-loop, and first message preserved
+        assert len(messages) >= 1
+        assert messages[0]["content"].startswith("first")
+
+    def test_truncation_preserves_minimum(self):
+        """A single oversized message doesn't reduce the list below 1 item."""
+        history = ConversationHistory(max_tokens=5)
+
+        # One message that far exceeds the token limit
+        history.add_user_message("word " * 100)
+
+        messages = history.get_messages()
+        assert len(messages) == 1
+        assert messages[0]["content"] == "word " * 100
+
+    def test_truncation_only_complete_pairs_dropped(self):
+        """After truncation, messages[0] always has the original first message."""
+        history = ConversationHistory(max_tokens=30)
+
+        history.add_user_message("original first message")
+        history.add_assistant_message("first reply")
+        history.add_user_message("big message " * 20)
+        history.add_assistant_message("big reply " * 20)
+        history.add_user_message("latest question")
+
+        messages = history.get_messages()
+        assert messages[0]["content"] == "original first message"
+
+    def test_empty_history_returns_empty_list(self):
+        """A brand-new history returns an empty list."""
+        history = ConversationHistory()
+        assert history.get_messages() == []
+
+    def test_truncation_on_empty_no_crash(self):
+        """Calling _truncate_if_needed on an empty history does not crash."""
+        history = ConversationHistory(max_tokens=5)
+        history._truncate_if_needed()
+        assert history.get_messages() == []

@@ -67,7 +67,6 @@ class AvctConfig:
     default_polar_level: int = 2
     default_category: str = "D"
     default_subtype: int = 2
-    prompts_dir: str = "prompts"
 
 
 @dataclass
@@ -150,8 +149,6 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
     # Resolve relative paths to absolute
     logging_cfg.db_path = str(project_root / logging_cfg.db_path)
     logging_cfg.audio_dir = str(project_root / logging_cfg.audio_dir)
-    avct_cfg.prompts_dir = str(project_root / avct_cfg.prompts_dir)
-
     return AppConfig(
         audio=audio,
         asr=asr,

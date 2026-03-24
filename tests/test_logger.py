@@ -61,7 +61,6 @@ def _make_turn(turn_number: int = 1) -> tuple:
         transcript="Hello there",
         llm_response="Whatever.",
         tts_result=tts_result,
-        hostility_level=3,
         polar_level=3,
         category="D",
         subtype=2,
@@ -90,7 +89,8 @@ class TestSessionLogger:
         """log_turn inserts a complete turn record."""
         logger.create_session("s1", "P001", 3, category="D", subtype=2, modifiers=[], config_snapshot=None)
         turn, asr_result, llm_result = _make_turn()
-        logger.log_turn("s1", turn, asr_result, llm_result, "Be mean.")
+        logger.log_turn("s1", turn, asr_result, llm_result, "Be mean.",
+                        conversation_history=[{"role": "user", "content": "Hello there"}])
 
         data = logger.export_session("s1")
         assert len(data["turns"]) == 1
@@ -121,7 +121,8 @@ class TestSessionLogger:
 
         for i in range(3):
             turn, asr_result, llm_result = _make_turn(turn_number=i + 1)
-            logger.log_turn("s1", turn, asr_result, llm_result, "Prompt")
+            logger.log_turn("s1", turn, asr_result, llm_result, "Prompt",
+                            conversation_history=[{"role": "user", "content": "Hello there"}])
 
         data = logger.export_session("s1")
         assert data["session"]["session_id"] == "s1"
@@ -137,7 +138,8 @@ class TestSessionLogger:
         """Audio files are saved to disk when save_audio=True."""
         logger.create_session("s1", "P001", 3, category="D", subtype=2, modifiers=[], config_snapshot=None)
         turn, asr_result, llm_result = _make_turn()
-        logger.log_turn("s1", turn, asr_result, llm_result, "Prompt")
+        logger.log_turn("s1", turn, asr_result, llm_result, "Prompt",
+                        conversation_history=[{"role": "user", "content": "Hello there"}])
 
         # Check user audio WAV exists
         user_wav = tmp_path / "audio" / "s1" / "turn_001_user.wav"
@@ -146,3 +148,28 @@ class TestSessionLogger:
         # Check agent audio WAV exists
         agent_wav = tmp_path / "audio" / "s1" / "turn_001_agent.wav"
         assert agent_wav.exists()
+
+    def test_log_turn_records_full_history(self, logger):
+        """log_turn stores the full conversation history in llm_input JSON."""
+        import json
+
+        logger.create_session("s1", "P001", 2, category="D", subtype=2, modifiers=[], config_snapshot=None)
+        turn, asr_result, llm_result = _make_turn()
+
+        full_history = [
+            {"role": "user", "content": "Hi there"},
+            {"role": "assistant", "content": "Hello."},
+            {"role": "user", "content": "Hello there"},
+        ]
+        logger.log_turn("s1", turn, asr_result, llm_result, "System prompt here",
+                        conversation_history=full_history)
+
+        data = logger.export_session("s1")
+        t = data["turns"][0]
+        llm_input = json.loads(t["llm_input"])
+
+        assert llm_input["system_prompt"] == "System prompt here"
+        assert len(llm_input["messages"]) == 3, "Should contain full 3-message history"
+        assert llm_input["messages"][0] == {"role": "user", "content": "Hi there"}
+        assert llm_input["messages"][1] == {"role": "assistant", "content": "Hello."}
+        assert llm_input["messages"][2] == {"role": "user", "content": "Hello there"}

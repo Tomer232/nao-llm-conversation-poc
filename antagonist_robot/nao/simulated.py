@@ -32,17 +32,19 @@ class SimulatedNAO(NAOAdapter):
         logger.info("[SimulatedNAO] Disconnected")
 
     def on_response(self, text: str, hostility_level: int) -> None:
-        """Log what gesture would be triggered for the given hostility level."""
+        """Log what gesture would be triggered for the given polar level."""
         gesture = {
-            1: "slight shrug",
-            2: "dismissive hand wave",
-            3: "pointing gesture",
-            4: "aggressive arm movement",
-            5: "emphatic double arm gesture",
-        }.get(hostility_level, "neutral")
+            -3: "supportive open-arms gesture",
+            -2: "supportive open-arms gesture",
+            -1: "supportive open-arms gesture",
+             0: "neutral stance",
+             1: "slight shrug",
+             2: "dismissive hand wave",
+             3: "emphatic double arm gesture",
+        }.get(hostility_level, "neutral stance")
         logger.info(
             "[SimulatedNAO] on_response: would trigger '%s' gesture "
-            "at hostility level %d",
+            "at polar level %d",
             gesture,
             hostility_level,
         )

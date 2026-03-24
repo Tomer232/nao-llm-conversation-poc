@@ -23,16 +23,18 @@
   header h1 { font-size: 20px; font-weight: 600; }
   header h1 span { color: #e94560; }
 
+  /* --- Settings Panel --- */
   .settings-panel {
     background: #16213e;
-    padding: 16px 24px;
+    padding: 12px 24px;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 16px;
+    align-items: flex-end;
+    gap: 14px;
     border-bottom: 1px solid #333;
   }
-  .settings-panel label { font-size: 13px; color: #aaa; }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 12px; color: #aaa; white-space: nowrap; }
   .settings-panel input[type="text"] {
     background: #0f3460;
     border: 1px solid #444;
@@ -40,7 +42,7 @@
     padding: 6px 10px;
     border-radius: 4px;
     font-size: 14px;
-    width: 150px;
+    width: 120px;
   }
   .settings-panel select {
     background: #0f3460;
@@ -51,39 +53,64 @@
     font-size: 14px;
   }
 
-  .hostility-buttons {
-    display: flex;
-    gap: 4px;
-  }
-  .hostility-btn {
-    width: 36px;
-    height: 36px;
+  /* Shared button row style */
+  .btn-row { display: flex; gap: 3px; }
+
+  /* Generic AVCT toggle button */
+  .avct-btn {
+    min-width: 34px;
+    height: 32px;
+    padding: 0 6px;
     border: 2px solid #444;
-    border-radius: 6px;
+    border-radius: 5px;
     background: #0f3460;
-    color: #eee;
-    font-size: 14px;
+    color: #ccc;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    white-space: nowrap;
   }
-  .hostility-btn:hover { border-color: #e94560; }
-  .hostility-btn.active {
+  .avct-btn:hover { border-color: #e94560; }
+  .avct-btn.active {
     background: #e94560;
     border-color: #e94560;
     color: #fff;
   }
 
+  /* Polar-level buttons: each has a data-color used for active state */
+  .polar-btn.active { background: var(--polar-clr); border-color: var(--polar-clr); color: #fff; }
+  .polar-btn:hover { border-color: var(--polar-clr); }
+
+  /* Risk badge */
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    height: 32px;
+    align-self: flex-end;
+  }
+  .risk-badge.green  { background: #28a745; color: #fff; }
+  .risk-badge.amber  { background: #ffc107; color: #1a1a2e; }
+  .risk-badge.red    { background: #c62828; color: #fff; }
+
+  /* Session controls */
   .session-controls {
     display: flex;
     gap: 8px;
     margin-left: auto;
+    align-self: flex-end;
   }
   .btn {
-    padding: 8px 18px;
+    padding: 7px 16px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: opacity 0.2s;
@@ -93,6 +120,7 @@
   .btn-stop { background: #e94560; color: #fff; }
   .btn-export { background: #0f3460; color: #eee; border: 1px solid #444; }
 
+  /* --- Status Bar --- */
   .status-bar {
     background: #16213e;
     padding: 10px 24px;
@@ -113,6 +141,7 @@
   .status-dot.processing { background: #ffc107; }
   .status-dot.speaking { background: #007bff; }
 
+  /* --- Conversation Log --- */
   .conversation-log {
     flex: 1;
     overflow-y: auto;
@@ -144,7 +173,14 @@
     font-size: 14px;
   }
   .agent-text::before { content: "Agent: "; font-weight: 600; }
+  .turn-meta {
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+    font-family: monospace;
+  }
 
+  /* --- Latency Bar --- */
   .latency-bar {
     background: #16213e;
     padding: 10px 24px;
@@ -167,28 +203,33 @@
 <body>
 
 <header>
-  <h1><span>Roast</span>Crowd</h1>
+  <h1>Antagonistic <span>Robot</span></h1>
 </header>
 
 <div class="settings-panel">
-  <div>
-    <label>Participant ID</label><br>
+  <!-- Row 1: Participant, Polar Level, Risk, Voice, Session controls -->
+  <div class="control-group">
+    <label>Participant ID</label>
     <input type="text" id="participantId" placeholder="e.g. P001">
   </div>
 
-  <div>
-    <label>Hostility Level</label><br>
-    <div class="hostility-buttons">
-      <button class="hostility-btn" data-level="1" title="Dismissive">1</button>
-      <button class="hostility-btn" data-level="2" title="Sarcastic">2</button>
-      <button class="hostility-btn active" data-level="3" title="Confrontational">3</button>
-      <button class="hostility-btn" data-level="4" title="Hostile">4</button>
-      <button class="hostility-btn" data-level="5" title="Maximum">5</button>
+  <div class="control-group">
+    <label>Polar Level</label>
+    <div class="btn-row" id="polarButtons">
+      <button class="avct-btn polar-btn" data-polar="-3" style="--polar-clr:#0097a7" title="Maximum Support">-3</button>
+      <button class="avct-btn polar-btn" data-polar="-2" style="--polar-clr:#00acc1" title="Moderate Support">-2</button>
+      <button class="avct-btn polar-btn" data-polar="-1" style="--polar-clr:#26c6da" title="Mild Support">-1</button>
+      <button class="avct-btn polar-btn" data-polar="0"  style="--polar-clr:#666"    title="Neutral">0</button>
+      <button class="avct-btn polar-btn" data-polar="1"  style="--polar-clr:#f9a825" title="Mild Hostility">+1</button>
+      <button class="avct-btn polar-btn active" data-polar="2"  style="--polar-clr:#ef6c00" title="Moderate Hostility">+2</button>
+      <button class="avct-btn polar-btn" data-polar="3"  style="--polar-clr:#c62828" title="Maximum Hostility">+3</button>
     </div>
   </div>
 
-  <div>
-    <label>Voice</label><br>
+  <div class="risk-badge green" id="riskBadge">Green</div>
+
+  <div class="control-group">
+    <label>Voice</label>
     <select id="voiceSelect"><option>Loading...</option></select>
   </div>
 
@@ -196,6 +237,40 @@
     <button class="btn btn-start" id="startBtn">Start Session</button>
     <button class="btn btn-stop" id="stopBtn" disabled>End Session</button>
     <button class="btn btn-export" id="exportBtn" disabled>Export</button>
+  </div>
+
+  <!-- Row 2: Category, Subtype, Modifiers -->
+  <div class="control-group">
+    <label>Category</label>
+    <div class="btn-row" id="categoryButtons">
+      <button class="avct-btn" data-cat="B" title="Dismissive">B</button>
+      <button class="avct-btn" data-cat="C" title="Sarcastic">C</button>
+      <button class="avct-btn active" data-cat="D" title="Confrontational">D</button>
+      <button class="avct-btn" data-cat="E" title="Passive-Aggressive">E</button>
+      <button class="avct-btn" data-cat="F" title="Aggressive">F</button>
+      <button class="avct-btn" data-cat="G" title="Extreme">G</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Subtype</label>
+    <div class="btn-row" id="subtypeButtons">
+      <button class="avct-btn" data-sub="1">1</button>
+      <button class="avct-btn active" data-sub="2">2</button>
+      <button class="avct-btn" data-sub="3">3</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Modifiers</label>
+    <div class="btn-row" id="modifierButtons">
+      <button class="avct-btn" data-mod="M1" title="Interrupting">M1</button>
+      <button class="avct-btn" data-mod="M2" title="Gaslighting">M2</button>
+      <button class="avct-btn" data-mod="M3" title="Deflecting">M3</button>
+      <button class="avct-btn" data-mod="M4" title="Condescending">M4</button>
+      <button class="avct-btn" data-mod="M5" title="Threatening">M5</button>
+      <button class="avct-btn" data-mod="M6" title="Silent Treatment">M6</button>
+    </div>
   </div>
 </div>
 
@@ -224,7 +299,10 @@
 
 <script>
   // --- State ---
-  let selectedLevel = 3;
+  let selectedPolarLevel = 2;
+  let selectedCategory = 'D';
+  let selectedSubtype = 2;
+  let selectedModifiers = [];
   let sessionActive = false;
   let currentSessionId = null;
   let ws = null;
@@ -242,22 +320,87 @@
   const elapsedTime = document.getElementById('elapsedTime');
   const conversationLog = document.getElementById('conversationLog');
   const emptyState = document.getElementById('emptyState');
+  const riskBadge = document.getElementById('riskBadge');
 
-  // --- Hostility Buttons ---
-  document.querySelectorAll('.hostility-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedLevel = parseInt(btn.dataset.level);
-      document.querySelectorAll('.hostility-btn').forEach(b => b.classList.remove('active'));
+  // --- Risk Rating (mirrors backend logic) ---
+  function getRiskRating() {
+    if (selectedPolarLevel >= 3 || selectedCategory === 'G') return 'Red';
+    if (selectedPolarLevel === 2 && ['B', 'C', 'E'].includes(selectedCategory)) return 'Amber';
+    // Negative polar levels (supportive range) and all other combinations are Green
+    return 'Green';
+  }
+
+  function updateRiskBadge() {
+    var rating = getRiskRating();
+    riskBadge.textContent = rating;
+    riskBadge.className = 'risk-badge ' + rating.toLowerCase();
+  }
+
+  // --- Send settings to backend (mid-session) ---
+  function sendSettings() {
+    if (!sessionActive) return;
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        polar_level: selectedPolarLevel,
+        category: selectedCategory,
+        subtype: selectedSubtype,
+        modifiers: selectedModifiers
+      })
+    });
+  }
+
+  // --- Polar Level Buttons (single-select) ---
+  document.querySelectorAll('.polar-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedPolarLevel = parseInt(btn.dataset.polar);
+      document.querySelectorAll('.polar-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      if (sessionActive) {
-        fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hostility_level: selectedLevel })
-        });
-      }
+      updateRiskBadge();
+      sendSettings();
     });
   });
+
+  // --- Category Buttons (single-select) ---
+  document.querySelectorAll('#categoryButtons .avct-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedCategory = btn.dataset.cat;
+      document.querySelectorAll('#categoryButtons .avct-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      updateRiskBadge();
+      sendSettings();
+    });
+  });
+
+  // --- Subtype Buttons (single-select) ---
+  document.querySelectorAll('#subtypeButtons .avct-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedSubtype = parseInt(btn.dataset.sub);
+      document.querySelectorAll('#subtypeButtons .avct-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      sendSettings();
+    });
+  });
+
+  // --- Modifier Buttons (multi-select toggle) ---
+  document.querySelectorAll('#modifierButtons .avct-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var mod = btn.dataset.mod;
+      var idx = selectedModifiers.indexOf(mod);
+      if (idx === -1) {
+        selectedModifiers.push(mod);
+        btn.classList.add('active');
+      } else {
+        selectedModifiers.splice(idx, 1);
+        btn.classList.remove('active');
+      }
+      sendSettings();
+    });
+  });
+
+  // Initialize risk badge on load
+  updateRiskBadge();
 
   // --- Load Voices ---
   async function loadVoices() {
@@ -280,7 +423,13 @@
       const res = await fetch('/api/session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_id: pid, hostility_level: selectedLevel })
+        body: JSON.stringify({
+          participant_id: pid,
+          polar_level: selectedPolarLevel,
+          category: selectedCategory,
+          subtype: selectedSubtype,
+          modifiers: selectedModifiers
+        })
       });
       const data = await res.json();
       if (res.ok) {
@@ -392,13 +541,19 @@
   }
 
   function addTurn(data) {
+    var polar = data.polar_level;
+    var polarStr = (polar >= 0 ? '+' : '') + polar;
+    var cat = data.category || '';
+    var sub = data.subtype || '';
+    var risk = data.risk_rating || '';
+
     const div = document.createElement('div');
     div.className = 'turn-entry';
-    div.innerHTML = `
-      <div class="turn-number">Turn ${data.turn_number}</div>
-      <div class="user-text">${escapeHtml(data.transcript)}</div>
-      <div class="agent-text">${escapeHtml(data.response)}</div>
-    `;
+    div.innerHTML =
+      '<div class="turn-number">Turn ' + escapeHtml(String(data.turn_number)) + '</div>' +
+      '<div class="user-text">' + escapeHtml(data.transcript) + '</div>' +
+      '<div class="agent-text">' + escapeHtml(data.response) + '</div>' +
+      '<div class="turn-meta">Polar: ' + escapeHtml(polarStr) + ' | Cat: ' + escapeHtml(cat + sub) + ' | Risk: ' + escapeHtml(risk) + '</div>';
     conversationLog.appendChild(div);
     conversationLog.scrollTop = conversationLog.scrollHeight;
   }

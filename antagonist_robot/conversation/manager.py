@@ -5,6 +5,7 @@ capture -> ASR -> LLM -> TTS -> audio output. Each step completes
 before the next starts.
 """
 
+import re
 import time
 import uuid
 import logging
@@ -21,6 +22,20 @@ from antagonist_robot.pipeline.audio_output import AudioOutputBase, NAOAudioOutp
 from antagonist_robot.pipeline.llm import LLMEngine
 from antagonist_robot.pipeline.tts import TTSBase
 from antagonist_robot.pipeline.types import TurnResult, LLMResult
+
+_END_PATTERN = re.compile(r'\[end\]', re.IGNORECASE)
+
+def extract_end_signal(text: str) -> tuple[str, bool]:
+    """Check for [END] sentinel token and return cleaned text.
+
+    Returns:
+        (cleaned_text, end_detected): The text with [END] stripped and
+        whether the end signal was found. Case-insensitive.
+    """
+    if _END_PATTERN.search(text):
+        cleaned = _END_PATTERN.sub('', text).strip()
+        return cleaned, True
+    return text, False
 
 class SystemState:
     """Observable state constants for the UI."""
@@ -64,6 +79,7 @@ class ConversationManager:
         self._category: str = self._avct.default_category
         self._subtype: int = self._avct.default_subtype
         self._modifiers: list = []
+        self._end_requested: bool = False
 
         self.on_state_change: Optional[Callable[[str], None]] = None
 
@@ -75,6 +91,12 @@ class ConversationManager:
     def turn_count(self) -> int: return self._turn_count
     @property
     def is_running(self) -> bool: return self._running
+    @property
+    def polar_level(self) -> int:
+        return self._polar_level
+    @property
+    def end_requested(self) -> bool:
+        return self._end_requested
     @property
     def elapsed_seconds(self) -> float:
         if self._session_start_time is None: return 0.0
@@ -99,6 +121,7 @@ class ConversationManager:
 
     def start_session(self, polar_level: int, category: str, subtype: int, modifiers: list, participant_id: str) -> str:
         self._session_id = str(uuid.uuid4())[:8]
+        self._end_requested = False
         self.set_avct(polar_level, category, subtype, modifiers)
         self._participant_id = participant_id
         self._turn_count = 0
@@ -152,36 +175,43 @@ class ConversationManager:
             llm_result = LLMResult(text="I see. Go on.", model="fallback", total_tokens=0, generation_time_seconds=time.monotonic() - t2)
         latency["llm_ms"] = round((time.monotonic() - t2) * 1000)
 
+        # Snapshot the conversation history as sent to the LLM (before assistant response is added)
+        conversation_history = self._history.get_messages()
+
+        # 3b. Check for LLM end signal and clean the response text
+        response_text, end_detected = extract_end_signal(llm_result.text)
+        if end_detected:
+            self._end_requested = True
+
         risk_rating = self._avct.get_risk_rating(self._polar_level, self._category, self._subtype, self._modifiers)
 
-        # 4. Synthesize
+        # 4. Synthesize (using cleaned text — [END] token never reaches TTS)
         self._set_state(SystemState.SPEAKING)
         tts_result = None
 
         if isinstance(self._output, NAOAudioOutput) and self._output.use_builtin_tts:
             t3 = time.monotonic()
-            self._output.speak_text(llm_result.text)
+            self._output.speak_text(response_text)
             latency["tts_ms"] = round((time.monotonic() - t3) * 1000)
         else:
             t3 = time.monotonic()
-            tts_result = self._tts.synthesize(llm_result.text)
+            tts_result = self._tts.synthesize(response_text)
             latency["tts_ms"] = round((time.monotonic() - t3) * 1000)
             self._output.play_audio(tts_result)
 
         latency["total_ms"] = round((time.monotonic() - t0) * 1000)
-        
-        self._nao.on_response(llm_result.text, self._polar_level)  # backward compat passing polar_level as hostility
 
-        self._history.add_assistant_message(llm_result.text)
+        self._nao.on_response(response_text, self._polar_level)
+
+        self._history.add_assistant_message(response_text)
 
         timestamp = datetime.now(timezone.utc).isoformat()
         turn_result = TurnResult(
             turn_number=self._turn_count,
             user_audio=audio,
             transcript=asr_result.text,
-            llm_response=llm_result.text,
+            llm_response=response_text,
             tts_result=tts_result,
-            hostility_level=self._polar_level,
             polar_level=self._polar_level,
             category=self._category,
             subtype=self._subtype,
@@ -197,6 +227,7 @@ class ConversationManager:
             asr_result=asr_result,
             llm_result=llm_result,
             system_prompt=system_prompt,
+            conversation_history=conversation_history,
         )
 
         self._set_state(SystemState.IDLE)

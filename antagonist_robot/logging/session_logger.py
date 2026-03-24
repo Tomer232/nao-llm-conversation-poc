@@ -135,6 +135,7 @@ class SessionLogger:
         asr_result: ASRResult,
         llm_result: LLMResult,
         system_prompt: str,
+        conversation_history: list,
     ) -> None:
         """Log a complete turn to the database and save audio files."""
         user_audio_path = None
@@ -159,24 +160,24 @@ class SessionLogger:
 
         llm_input_log = json.dumps({
             "system_prompt": system_prompt,
-            "messages": turn.user_audio is not None and [{"role": "user", "content": turn.transcript}] or [],
+            "messages": conversation_history,
         })
 
         self._conn.execute(
             "INSERT INTO turns (session_id, turn_number, timestamp, "
             "user_audio_path, user_transcript, transcript_confidence, "
             "llm_input, llm_output, llm_model, tokens_used, "
-            "tts_voice, tts_audio_path, hostility_level, "
+            "tts_voice, tts_audio_path, "
             "polar_level, category, subtype, modifiers_json, risk_rating, "
             "latency_vad_ms, latency_asr_ms, latency_llm_ms, "
             "latency_tts_ms, latency_total_ms) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 session_id, turn.turn_number, turn.timestamp,
                 user_audio_path, turn.transcript, asr_result.confidence,
                 llm_input_log, turn.llm_response, llm_result.model, llm_result.total_tokens,
                 turn.tts_result.voice if turn.tts_result else None, tts_audio_path,
-                turn.hostility_level, turn.polar_level, turn.category, turn.subtype,
+                turn.polar_level, turn.category, turn.subtype,
                 json.dumps(turn.modifiers), turn.risk_rating,
                 turn.latency.get("vad_ms"), turn.latency.get("asr_ms"), turn.latency.get("llm_ms"),
                 turn.latency.get("tts_ms"), turn.latency.get("total_ms"),

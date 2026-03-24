@@ -158,9 +158,9 @@ Each category has three intensity subtypes (e.g., D1, D2, D3) for fine-grained c
 ### Risk Rating
 
 The system automatically calculates a risk rating based on parameter intensity:
-- **Green** — Safe (low polar, mild categories)
-- **Amber** — Elevated (moderate polar, mid categories)
-- **Red** — High-risk (high polar, extreme categories like G3)
+- **Green** — Safe: all supportive sessions (polar -3 to -1), neutral (0), and low-intensity antagonism
+- **Amber** — Elevated: moderate antagonism (polar +2) with categories B, C, or E
+- **Red** — High-risk: maximum antagonism (polar +3) or extreme category G at any level
 
 ### Safety Boundaries
 

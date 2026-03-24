@@ -58,7 +58,6 @@ class TurnResult:
     transcript: str
     llm_response: str
     tts_result: Optional[TTSResult]
-    hostility_level: int
     polar_level: int
     category: str
     subtype: int

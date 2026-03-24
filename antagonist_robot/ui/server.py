@@ -216,6 +216,17 @@ def create_app(
                             "latency": turn_result.latency,
                             "timestamp": turn_result.timestamp,
                         })
+
+                        # Check if the LLM requested session end
+                        if manager.end_requested:
+                            logger.info("LLM requested session end via [END] token")
+                            summary = manager.end_session()
+                            ws_manager.broadcast({
+                                "type": "session_ended",
+                                "reason": "robot_initiated",
+                                **summary,
+                            })
+                            break
                     except Exception as e:
                         if _conversation_thread["generation"] != my_generation:
                             return
@@ -265,7 +276,7 @@ def create_app(
             "session_id": manager.session_id,
             "turn_count": manager.turn_count,
             "elapsed_seconds": round(manager.elapsed_seconds, 1),
-            "polar_level": getattr(manager, 'polar_level', getattr(manager, 'hostility_level', 0)),
+            "polar_level": manager.polar_level,
             "is_running": manager.is_running,
         }
 

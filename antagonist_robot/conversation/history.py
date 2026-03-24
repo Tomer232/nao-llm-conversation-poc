@@ -49,25 +49,27 @@ class ConversationHistory:
         return int(total_words * self.TOKEN_MULTIPLIER)
 
     def _truncate_if_needed(self) -> None:
-        """If history exceeds token limit, drop oldest turns.
+        """Drop oldest exchanges until under the token limit.
 
-        Always keeps the first turn (first user + assistant pair)
-        for context continuity. Drops messages in pairs to keep
-        the conversation coherent.
+        Always preserves _messages[0] for context continuity. Scans
+        from index 1 for the oldest complete user+assistant exchange
+        and drops it as a unit. Falls back to dropping a single message
+        if no complete exchange exists. Handles non-alternating sequences
+        (e.g. two consecutive user messages) without breaking.
         """
-        while (
-            self._estimate_tokens() > self._max_tokens
-            and len(self._messages) > 2
-        ):
-            # Remove the second message (index 1), preserving index 0.
-            # Remove in pairs (user + assistant) to keep conversation coherent.
-            if len(self._messages) > 3:
-                del self._messages[1]
-                # Also remove its pair if it exists
-                if (
-                    len(self._messages) > 1
-                    and self._messages[1]["role"] == "assistant"
-                ):
+        while self._estimate_tokens() > self._max_tokens and len(self._messages) > 1:
+            # Scan from index 1 for a complete exchange (user then assistant)
+            dropped = False
+            for i in range(1, len(self._messages) - 1):
+                if (self._messages[i]["role"] == "user"
+                        and self._messages[i + 1]["role"] == "assistant"):
+                    del self._messages[i + 1]
+                    del self._messages[i]
+                    dropped = True
+                    break
+            if not dropped:
+                # No complete exchange found — drop the single oldest non-first message
+                if len(self._messages) > 1:
                     del self._messages[1]
-            else:
-                break
+                else:
+                    break
