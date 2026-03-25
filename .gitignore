@@ -18,8 +18,18 @@ robot_state.txt
 # Backup files
 *.bak
 
-# Runtime data (logs, audio, database)
+# Runtime data (database, audio)
 data/
+
+# Session logs (contain participant data)
+logs/
+
+# Test results (generated, not source)
+tests/results/
+
+# React build artifacts (regenerate with: cd webui && npm run build)
+webui/build/
+webui/node_modules/
 
 # Old runtime files
 control_flags.txt
