@@ -44,7 +44,6 @@ NAO_LLM/
 │   ├── src/App.js               # AVCT Control Panel + Turn Preview Monitor
 │   └── build/                   # Compiled static assets served by FastAPI
 │
-├── tests/                       # Unit tests
 ├── data/                        # SQLite DB + saved audio (gitignored)
 └── logs/                        # Session log files
 ```
@@ -120,16 +119,6 @@ The web UI is accessible at `http://localhost:8000`.
 | `audio` | `sample_rate: 16000`, `silence_threshold_ms: 700` |
 | `nao` | `mode: real`, `ip`, `port` |
 | `avct` | `default_polar_level: 2`, `default_category: D`, `default_subtype: 2` |
-
----
-
-## Tests
-
-```bash
-python -m pytest tests/ -v
-```
-
-Tests cover config loading, AVCT prompt generation, conversation history, session logging, LLM mocking, and audio output interfaces.
 
 ---
 

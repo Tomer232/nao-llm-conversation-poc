@@ -272,48 +272,9 @@ antagonistic-robot/
 │   │   └── App.js                   # AVCT Control Panel + Turn Preview
 │   └── build/                       # Compiled assets (gitignored)
 │
-├── tests/                           # Unit and integration tests
-│   ├── test_avct_prompts.py         # AVCT prompt generation and safety
-│   ├── test_config.py               # Configuration loading
-│   ├── test_history.py              # Conversation history management
-│   ├── test_logger.py               # Session logging
-│   ├── test_llm.py                  # LLM engine mocking
-│   ├── test_audio_output.py         # Audio output interfaces
-│   ├── test_end_signal.py           # End-of-session signal detection
-│   ├── test_single_turn.py          # Single-turn integration test
-│   ├── run_suite.py                 # Automated test suite runner
-│   ├── test_cases.yaml              # Test case definitions
-│   ├── reporter.py                  # HTML/JSON report generation
-│   ├── evaluator/                   # LLM-as-judge evaluation
-│   │   ├── behaviour_evaluator.py
-│   │   └── safety_checker.py
-│   └── simulator/                   # Conversation simulation
-│       ├── matrix.py                # Test case matrix loader
-│       ├── scripter.py              # Script runner
-│       └── text_injector.py         # Text-only conversation driver
-│
 ├── data/                            # SQLite DB + audio (gitignored)
 └── logs/                            # Session logs (gitignored)
 ```
-
-## Running Tests
-
-```bash
-python -m pytest tests/ -v
-```
-
-Tests cover config loading, AVCT prompt generation and safety verification, conversation history management, session logging, LLM mocking, and audio output interfaces.
-
-### Automated Test Suite
-
-The automated test suite runs scripted conversations through the LLM, checks safety boundaries via regex patterns, and evaluates behavioral correctness using LLM-as-judge:
-
-```bash
-python -m tests.run_suite --tier smoke          # Quick validation
-python -m tests.run_suite --tier deep --runs 3  # Full evaluation
-```
-
-Results are saved to `tests/results/` as HTML and JSON reports.
 
 ## Data Export
 
