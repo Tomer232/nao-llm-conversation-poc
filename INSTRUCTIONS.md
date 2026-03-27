@@ -19,7 +19,6 @@ NAO_LLM/
 ├── nao_speaker_server.py        # Runs on the NAO robot to receive TTS commands
 ├── requirements.txt             # Python dependencies
 ├── .env                         # API keys (GROK_API_KEY, OPENAI_API_KEY)
-├── AVCT_v11.docx                # Original AVCT requirements document
 │
 ├── antagonist_robot/                    # Main Python package
 │   ├── config/settings.py       # Loads & validates config.yaml

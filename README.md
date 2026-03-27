@@ -241,7 +241,6 @@ antagonistic-robot/
 ├── nao_speaker_server.py            # Runs on the NAO robot
 ├── requirements.txt                 # Python dependencies
 ├── .env.example                     # API key template
-├── AVCT_v11.docx                    # Original AVCT requirements document
 │
 ├── antagonist_robot/                # Main Python package
 │   ├── config/
@@ -329,17 +328,3 @@ llm:
   api_key_env: "OLLAMA_API_KEY"  # set to any non-empty string
 ```
 
-## Citation
-
-```bibtex
-@software{antagonistic_robot_2026,
-  title = {Antagonistic Robot: An AVCT-Based Voice Conversation System for HRI Research},
-  author = {TODO},  % TODO: Add author names before submission
-  year = {2026},
-  url = {https://github.com/Tomer232/antagonistic-robot}
-}
-```
-
-## License
-
-TODO: Add license before publication.
